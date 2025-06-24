@@ -1,0 +1,166 @@
+# docker/Dockerfile.ai
+# AI Node Docker Image
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+
+# Install Python and dependencies
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    git \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements
+COPY requirements/base.txt requirements/ai.txt ./
+RUN pip3 install -r base.txt -r ai.txt
+
+# Copy application code
+COPY . .
+
+# Set environment
+ENV PYTHONUNBUFFERED=1
+ENV CUDA_VISIBLE_DEVICES=0,1
+
+# Run AI node
+CMD ["python3", "run_node.py", "--type", "ai"]
+
+# docker/Dockerfile.scraper
+# Scraping Node Docker Image
+FROM python:3.10-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    unzip \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Chrome for Selenium
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install ChromeDriver
+RUN CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | awk -F. '{print $1}') \
+    && wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}/chromedriver_linux64.zip \
+    && unzip /tmp/chromedriver.zip -d /usr/local/bin/ \
+    && rm /tmp/chromedriver.zip
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements
+COPY requirements/base.txt requirements/scraping.txt ./
+RUN pip install -r base.txt -r scraping.txt
+
+# Copy application code
+COPY . .
+
+# Set environment
+ENV PYTHONUNBUFFERED=1
+
+# Run scraping node
+CMD ["python", "run_node.py", "--type", "scraping"]
+
+# docker/Dockerfile.scheduler
+# Scheduler Node Docker Image
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Copy requirements
+COPY requirements/base.txt ./
+RUN pip install -r base.txt
+
+# Copy application code
+COPY . .
+
+ENV PYTHONUNBUFFERED=1
+
+CMD ["python", "run_node.py", "--type", "scheduler"]
+
+# docker/docker-compose.yml
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  view-master:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.scheduler
+    ports:
+      - "5000:5000"
+    environment:
+      - REDIS_HOST=redis
+      - NODE_TYPE=view-master
+    depends_on:
+      - redis
+    command: python run_node.py --type view-master --master-ip redis
+
+  ai-node:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ai
+    environment:
+      - REDIS_HOST=redis
+      - NODE_TYPE=ai
+      - CUDA_VISIBLE_DEVICES=0,1
+    depends_on:
+      - redis
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 2
+              capabilities: [gpu]
+    command: python run_node.py --type ai --id ai-docker-01 --master-ip redis
+
+  scraper-1:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.scraper
+    environment:
+      - REDIS_HOST=redis
+      - NODE_TYPE=scraping
+    depends_on:
+      - redis
+    command: python run_node.py --type scraping --id scraper-docker-01 --master-ip redis --capabilities reddit twitter
+
+  scraper-2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.scraper
+    environment:
+      - REDIS_HOST=redis
+      - NODE_TYPE=scraping
+    depends_on:
+      - redis
+    command: python run_node.py --type scraping --id scraper-docker-02 --master-ip redis --capabilities instagram tiktok
+
+  scheduler:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.scheduler
+    environment:
+      - REDIS_HOST=redis
+      - NODE_TYPE=scheduler
+    depends_on:
+      - redis
+    command: python run_node.py --type scheduler --id scheduler-docker-01 --master-ip redis
+
+volumes:
+  redis_data:

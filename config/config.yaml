@@ -1,0 +1,236 @@
+# config/config.yaml
+# Main ScrapeHive Configuration
+
+# System Settings
+system:
+  name: "ScrapeHive"
+  version: "1.0.0"
+  environment: "production"  # development, staging, production
+
+# Redis Configuration
+redis:
+  host: "${REDIS_HOST}"
+  port: 6379
+  password: "${REDIS_PASSWORD}"
+  db: 0
+  decode_responses: true
+
+# Node Configuration
+nodes:
+  heartbeat_interval: 10  # seconds
+  task_timeout: 300      # 5 minutes
+  retry_attempts: 3
+  
+# Scraping Configuration  
+scraping:
+  user_agents:
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+    - "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+  
+  rate_limits:
+    reddit:
+      requests_per_minute: 30
+      cooldown_seconds: 2
+    twitter:
+      requests_per_minute: 20
+      cooldown_seconds: 3
+    instagram:
+      requests_per_minute: 10
+      cooldown_seconds: 6
+    tiktok:
+      requests_per_minute: 15
+      cooldown_seconds: 4
+    default:
+      requests_per_minute: 10
+      cooldown_seconds: 6
+
+  delays:
+    min_delay: 2
+    max_delay: 5
+    human_variance: 0.3
+
+# AI Configuration
+ai:
+  models:
+    viral_predictor:
+      path: "models/weights/viral_predictor"
+      version: "1.0"
+      device: "cuda"
+    content_analyzer:
+      path: "models/weights/content_analyzer"
+      version: "1.0"
+      device: "cuda"
+    script_generator:
+      path: "models/weights/script_generator"
+      version: "1.0"
+      device: "cuda"
+  
+  inference:
+    batch_size: 32
+    max_length: 512
+    temperature: 0.7
+
+# Pipeline Configuration
+pipelines:
+  max_concurrent: 10
+  default_timeout: 3600  # 1 hour
+  
+  templates:
+    reddit_to_video:
+      name: "Reddit Story to Video"
+      stages:
+        - name: "Scrape Reddit"
+          type: "scrape"
+          config:
+            platform: "reddit"
+            capabilities: ["reddit"]
+        - name: "Analyze Content"
+          type: "analyze"
+          config:
+            model: "content_analyzer"
+        - name: "Generate Script"
+          type: "generate"
+          config:
+            model: "script_generator"
+            style: "engaging"
+    
+    trending_monitor:
+      name: "Trending Content Monitor"
+      stages:
+        - name: "Scrape Multiple"
+          type: "scrape_batch"
+          config:
+            platforms: ["reddit", "twitter", "tiktok"]
+        - name: "Detect Trends"
+          type: "analyze"
+          config:
+            model: "trend_detector"
+
+# Storage Configuration
+storage:
+  scraped_data:
+    path: "data/scraped"
+    retention_days: 30
+  processed_data:
+    path: "data/processed"
+    retention_days: 90
+  logs:
+    path: "logs"
+    retention_days: 7
+    max_size_mb: 100
+
+# Monitoring Configuration
+monitoring:
+  metrics_interval: 60  # seconds
+  alert_thresholds:
+    cpu_percent: 90
+    memory_percent: 85
+    error_rate: 0.1
+    queue_size: 1000
+
+# Security Configuration
+security:
+  api_key_required: true
+  allowed_ips: []  # Empty = allow all
+  rate_limit_per_ip: 1000  # requests per hour
+
+# config/nodes.yaml
+# Node Registry Configuration
+
+nodes:
+  # AI Processing Node
+  ai-gpu-01:
+    type: "ai_node"
+    hostname: "gpu-server"
+    ip: "192.168.1.100"
+    capabilities:
+      - "viral_prediction"
+      - "content_analysis"
+      - "script_generation"
+      - "video_processing"
+    resources:
+      gpus: 2
+      gpu_model: "RTX 3090"
+      memory_gb: 64
+      cpu_cores: 16
+    
+  # Scraping Nodes
+  scraper-laptop-01:
+    type: "scraping_node"
+    hostname: "laptop-01"
+    ip: "192.168.1.101"
+    capabilities:
+      - "reddit"
+      - "twitter"
+      - "browser"
+      - "heavy"
+    resources:
+      memory_gb: 16
+      cpu_cores: 8
+    proxy_type: "residential"
+    
+  scraper-laptop-02:
+    type: "scraping_node"
+    hostname: "laptop-02"
+    ip: "192.168.1.102"
+    capabilities:
+      - "instagram"
+      - "tiktok"
+      - "browser"
+      - "mobile"
+    resources:
+      memory_gb: 16
+      cpu_cores: 8
+    proxy_type: "mobile"
+    
+  scraper-rpi-01:
+    type: "scraping_node"
+    hostname: "raspberrypi-01"
+    ip: "192.168.1.103"
+    capabilities:
+      - "reddit"
+      - "api"
+      - "light"
+    resources:
+      memory_gb: 4
+      cpu_cores: 4
+    proxy_type: "datacenter"
+    
+  scraper-rpi-02:
+    type: "scraping_node"
+    hostname: "raspberrypi-02"
+    ip: "192.168.1.104"
+    capabilities:
+      - "twitter"
+      - "api"
+      - "light"
+    resources:
+      memory_gb: 4
+      cpu_cores: 4
+    proxy_type: "datacenter"
+    
+  # Scheduler Node
+  scheduler-01:
+    type: "scheduler_node"
+    hostname: "scheduler"
+    ip: "192.168.1.105"
+    capabilities:
+      - "scheduling"
+      - "pipeline_management"
+      - "light_scraping"
+    resources:
+      memory_gb: 8
+      cpu_cores: 4
+    
+  # View Master Node
+  view-master-01:
+    type: "view_master"
+    hostname: "master"
+    ip: "192.168.1.100"  # Same as GPU PC
+    capabilities:
+      - "monitoring"
+      - "control"
+      - "analytics"
+      - "database"
+    web_port: 5000

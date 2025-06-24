@@ -1,0 +1,63 @@
+// config/reddit_accounts.json.example
+{
+  "accounts": [
+    {
+      "username": "your_reddit_username1",
+      "password": "your_password1",
+      "client_id": "your_client_id1",
+      "client_secret": "your_client_secret1",
+      "user_agent": "ScrapeHive/1.0 by /u/your_username1",
+      "description": "Main account",
+      "created_date": "2020-01-01",
+      "karma": 1000,
+      "subreddits": ["python", "datascience", "machinelearning"]
+    },
+    {
+      "username": "your_reddit_username2",
+      "password": "your_password2",
+      "client_id": "your_client_id2",
+      "client_secret": "your_client_secret2",
+      "user_agent": "DataCollector/1.0 by /u/your_username2",
+      "description": "Secondary account",
+      "created_date": "2021-06-15",
+      "karma": 500,
+      "subreddits": ["askreddit", "technology"]
+    },
+    {
+      "username": "your_reddit_username3",
+      "password": "your_password3",
+      "client_id": "your_client_id3",
+      "client_secret": "your_client_secret3",
+      "user_agent": "ResearchBot/1.0 by /u/your_username3",
+      "description": "Research account",
+      "created_date": "2022-03-20",
+      "karma": 250,
+      "subreddits": ["science", "askscience"]
+    }
+  ],
+  "rotation_strategy": {
+    "max_requests_per_account": 500,
+    "cooldown_minutes": 60,
+    "distribute_by_subreddit": true,
+    "prefer_high_karma": true
+  },
+  "api_settings": {
+    "respect_rate_limits": true,
+    "max_retries": 3,
+    "timeout_seconds": 30,
+    "use_oauth": true
+  }
+}
+
+// Instructions for getting Reddit API credentials:
+// 1. Go to https://www.reddit.com/prefs/apps
+// 2. Click "Create App" or "Create Another App"
+// 3. Fill in the form:
+//    - Name: Your app name
+//    - App type: Select "script"
+//    - Description: Brief description
+//    - About URL: Can be blank
+//    - Redirect URI: http://localhost:8080
+// 4. Click "Create app"
+// 5. Your client_id is the string under "personal use script"
+// 6. Your client_secret is the "secret" string
