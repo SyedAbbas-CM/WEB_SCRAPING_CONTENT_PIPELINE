@@ -1,0 +1,1344 @@
+        .dark-mode {
+            background-color: var(--dark-bg);
+            color: #f0f0f0;
+        }
+        
+        .sidebar {
+            background-color: var(--primary-color);
+            min-height: 100vh;
+            color: white;
+            padding-top: 20px;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 10px 20px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: var(--secondary-color);
+        }
+        
+        .status-card {
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .status-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .node-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .node-status.online {
+            background-color: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+        
+        .node-status.offline {
+            background-color: var(--danger-color);
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .task-item {
+            border-left: 3px solid var(--secondary-color);
+            padding-left: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .task-item.completed {
+            border-color: var(--success-color);
+        }
+        
+        .task-item.failed {
+            border-color: var(--danger-color);
+        }
+        
+        .queue-badge {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+        
+        .pipeline-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .pipeline-card:hover {
+            border-color: var(--secondary-color);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .stage-indicator {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-size: 12px;
+            margin: 0 5px;
+            background-color: #e9ecef;
+        }
+        
+        .stage-indicator.completed {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .stage-indicator.running {
+            background-color: var(--warning-color);
+            color: white;
+            animation: pulse 1s infinite;
+        }
+        
+        .stage-indicator.failed {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .log-viewer {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            padding: 15px;
+            border-radius: 5px;
+            height: 400px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            white-space: pre-wrap;
+        }
+        
+        .log-entry.error {
+            color: #f48771;
+        }
+        
+        .log-entry.warning {
+            color: #dcdcaa;
+        }
+        
+        .log-entry.info {
+            color: #9cdcfe;
+        }
+        
+        .alert-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        }
+        
+        .content-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        
+        .content-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .viral-score {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .viral-score.high {
+            color: var(--success-color);
+        }
+        
+        .viral-score.medium {
+            color: var(--warning-color);
+        }
+        
+        .viral-score.low {
+            color: var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-2 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky">
+                    <div class="text-center mb-4">
+                        <h3><i class="bi bi-diagram-3"></i> ScrapeHive</h3>
+                        <small>Distributed Intelligence System</small>
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#dashboard" data-page="dashboard">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#nodes" data-page="nodes">
+                                <i class="bi bi-hdd-network"></i> Nodes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#pipelines" data-page="pipelines">
+                                <i class="bi bi-diagram-2"></i> Pipelines
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#tasks" data-page="tasks">
+                                <i class="bi bi-list-task"></i> Tasks
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#content" data-page="content">
+                                <i class="bi bi-collection"></i> Content
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#analytics" data-page="analytics">
+                                <i class="bi bi-graph-up"></i> Analytics
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#logs" data-page="logs">
+                                <i class="bi bi-terminal"></i> Logs
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#settings" data-page="settings">
+                                <i class="bi bi-gear"></i> Settings
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            
+            <!-- Main Content -->
+            <main class="col-md-10 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page-content">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">System Dashboard</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshDashboard()">
+                                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                                </button>
+                            </div>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="bi bi-calendar"></i> Last 24 hours
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#">Last hour</a></li>
+                                    <li><a class="dropdown-item" href="#">Last 24 hours</a></li>
+                                    <li><a class="dropdown-item" href="#">Last 7 days</a></li>
+                                    <li><a class="dropdown-item" href="#">Last 30 days</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- System Overview -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card status-card">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Active Nodes</h6>
+                                    <div class="metric-value" id="active-nodes-count">0</div>
+                                    <small class="text-muted">of <span id="total-nodes-count">0</span> total</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card status-card">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Tasks Completed</h6>
+                                    <div class="metric-value" id="tasks-completed">0</div>
+                                    <small class="text-success"><i class="bi bi-arrow-up"></i> <span id="success-rate">0</span>% success</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card status-card">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Content Scraped</h6>
+                                    <div class="metric-value" id="content-count">0</div>
+                                    <small class="text-muted">Last 24 hours</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card status-card">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Avg Viral Score</h6>
+                                    <div class="metric-value" id="avg-viral-score">0</div>
+                                    <small class="text-muted">High potential: <span id="high-viral-count">0</span></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Row -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Task Activity</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="taskActivityChart" height="100"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Platform Distribution</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="platformChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Node Status -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Node Status</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Node ID</th>
+                                                    <th>Type</th>
+                                                    <th>Status</th>
+                                                    <th>CPU</th>
+                                                    <th>Memory</th>
+                                                    <th>Tasks</th>
+                                                    <th>Current Task</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="nodes-table-body">
+                                                <!-- Populated by JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activity -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Recent Tasks</h5>
+                                </div>
+                                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                                    <div id="recent-tasks-list">
+                                        <!-- Populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">System Alerts</h5>
+                                </div>
+                                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                                    <div id="system-alerts-list">
+                                        <!-- Populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Nodes Page -->
+                <div id="nodes-page" class="page-content" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Node Management</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="showAddNodeModal()">
+                                <i class="bi bi-plus-circle"></i> Add Node
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="row" id="nodes-grid">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Pipelines Page -->
+                <div id="pipelines-page" class="page-content" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Pipeline Management</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="showCreatePipelineModal()">
+                                <i class="bi bi-plus-circle"></i> Create Pipeline
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4>Active Pipelines</h4>
+                            <div id="pipelines-list">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h4>Pipeline Templates</h4>
+                            <div class="list-group" id="pipeline-templates">
+                                <a href="#" class="list-group-item list-group-item-action" onclick="loadPipelineTemplate('reddit_to_video')">
+                                    <h6 class="mb-1">Reddit to Video</h6>
+                                    <p class="mb-1">Scrape Reddit → Analyze → Generate Script</p>
+                                    <small>4 stages • ~10 min</small>
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action" onclick="loadPipelineTemplate('trending_monitor')">
+                                    <h6 class="mb-1">Trending Monitor</h6>
+                                    <p class="mb-1">Multi-platform trending content tracker</p>
+                                    <small>3 stages • Continuous</small>
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action" onclick="loadPipelineTemplate('viral_hunter')">
+                                    <h6 class="mb-1">Viral Hunter</h6>
+                                    <p class="mb-1">Find and analyze high-potential content</p>
+                                    <small>5 stages • ~15 min</small>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Content Page -->
+                <div id="content-page" class="page-content" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Content Database</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportContent()">
+                                    <i class="bi bi-download"></i> Export
+                                </button>
+                            </div>
+                            <div class="input-group">
+                                <input type="text" class="form-control form-control-sm" placeholder="Search content..." id="content-search">
+                                <button class="btn btn-sm btn-outline-secondary" type="button">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Filters -->
+                    <div class="row mb-3">
+                        <div class="col-md-2">
+                            <select class="form-select form-select-sm" id="platform-filter">
+                                <option value="">All Platforms</option>
+                                <option value="reddit">Reddit</option>
+                                <option value="twitter">Twitter</option>
+                                <option value="instagram">Instagram</option>
+                                <option value="tiktok">TikTok</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select form-select-sm" id="viral-filter">
+                                <option value="">All Scores</option>
+                                <option value="high">High (75+)</option>
+                                <option value="medium">Medium (50-74)</option>
+                                <option value="low">Low (<50)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select form-select-sm" id="status-filter">
+                                <option value="">All Status</option>
+                                <option value="analyzed">Analyzed</option>
+                                <option value="script_generated">Script Generated</option>
+                                <option value="published">Published</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Grid -->
+                    <div class="row" id="content-grid">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Analytics Page -->
+                <div id="analytics-page" class="page-content" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Analytics Dashboard</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <select class="form-select form-select-sm" id="analytics-timeframe">
+                                <option value="1h">Last Hour</option>
+                                <option value="24h" selected>Last 24 Hours</option>
+                                <option value="7d">Last 7 Days</option>
+                                <option value="30d">Last 30 Days</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Content Performance</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="performanceChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Viral Score Distribution</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="viralDistributionChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Trending Topics</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="trending-topics">
+                                        <!-- Populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Logs Page -->
+                <div id="logs-page" class="page-content" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">System Logs</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <select class="form-select form-select-sm me-2" id="log-node-filter">
+                                <option value="">All Nodes</option>
+                            </select>
+                            <select class="form-select form-select-sm me-2" id="log-level-filter">
+                                <option value="">All Levels</option>
+                                <option value="error">Error</option>
+                                <option value="warning">Warning</option>
+                                <option value="info">Info</option>
+                                <option value="debug">Debug</option>
+                            </select>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearLogs()">
+                                <i class="bi bi-trash"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="log-viewer" id="log-viewer">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <!-- Create Pipeline Modal -->
+    <div class="modal fade" id="createPipelineModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Pipeline</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createPipelineForm">
+                        <div class="mb-3">
+                            <label class="form-label">Pipeline Name</label>
+                            <input type="text" class="form-control" id="pipeline-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="pipeline-description" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Stages</label>
+                            <div id="pipeline-stages">
+                                <!-- Dynamic stage inputs -->
+                            </div>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="addPipelineStage()">
+                                <i class="bi bi-plus"></i> Add Stage
+                            </button>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Schedule (optional)</label>
+                            <select class="form-select" id="pipeline-schedule">
+                                <option value="">No schedule</option>
+                                <option value="hourly">Every hour</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createPipeline()">Create Pipeline</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Initialize Socket.IO connection
+        const socket = io();
+        
+        // Global state
+        let currentPage = 'dashboard';
+        let dashboardData = {};
+        let charts = {};
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup navigation
+            setupNavigation();
+            
+            // Initialize dashboard
+            initializeDashboard();
+            
+            // Setup Socket.IO listeners
+            setupSocketListeners();
+            
+            // Start periodic updates
+            setInterval(updateDashboard, 5000);
+        });
+        
+        function setupNavigation() {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const page = this.getAttribute('data-page');
+                    showPage(page);
+                });
+            });
+        }
+        
+        function showPage(page) {
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(p => {
+                p.style.display = 'none';
+            });
+            
+            // Show selected page
+            document.getElementById(`${page}-page`).style.display = 'block';
+            
+            // Update active nav
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+            
+            currentPage = page;
+            
+            // Load page-specific data
+            switch(page) {
+                case 'dashboard':
+                    updateDashboard();
+                    break;
+                case 'nodes':
+                    loadNodes();
+                    break;
+                case 'pipelines':
+                    loadPipelines();
+                    break;
+                case 'content':
+                    loadContent();
+                    break;
+                case 'analytics':
+                    loadAnalytics();
+                    break;
+                case 'logs':
+                    loadLogs();
+                    break;
+            }
+        }
+        
+        function initializeDashboard() {
+            // Initialize charts
+            initializeCharts();
+            
+            // Load initial data
+            updateDashboard();
+        }
+        
+        function initializeCharts() {
+            // Task Activity Chart
+            const taskCtx = document.getElementById('taskActivityChart').getContext('2d');
+            charts.taskActivity = new Chart(taskCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Completed',
+                        data: [],
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Failed',
+                        data: [],
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Platform Distribution Chart
+            const platformCtx = document.getElementById('platformChart').getContext('2d');
+            charts.platform = new Chart(platformCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Reddit', 'Twitter', 'Instagram', 'TikTok'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56',
+                            '#4BC0C0'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateDashboard() {
+            fetch('/api/dashboard/summary')
+                .then(response => response.json())
+                .then(data => {
+                    dashboardData = data;
+                    
+                    // Update metrics
+                    document.getElementById('active-nodes-count').textContent = data.nodes.total_online;
+                    document.getElementById('total-nodes-count').textContent = Object.keys(data.nodes.stats).reduce((sum, type) => sum + data.nodes.stats[type].total, 0);
+                    document.getElementById('tasks-completed').textContent = data.tasks.last_24h.completed;
+                    document.getElementById('success-rate').textContent = data.tasks.success_rate.toFixed(1);
+                    document.getElementById('content-count').textContent = data.content.total_content;
+                    document.getElementById('avg-viral-score').textContent = data.content.avg_viral_score.toFixed(1);
+                    document.getElementById('high-viral-count').textContent = data.content.high_viral_count;
+                    
+                    // Update nodes table
+                    updateNodesTable(data.nodes);
+                    
+                    // Update recent tasks
+                    updateRecentTasks(data.tasks);
+                })
+                .catch(error => console.error('Error updating dashboard:', error));
+        }
+        
+        function updateNodesTable(nodesData) {
+            const tbody = document.getElementById('nodes-table-body');
+            tbody.innerHTML = '';
+            
+            fetch('/api/nodes/detailed')
+                .then(response => response.json())
+                .then(nodes => {
+                    Object.values(nodes).forEach(node => {
+                        const row = tbody.insertRow();
+                        
+                        row.innerHTML = `
+                            <td>
+                                <span class="node-status ${node.online ? 'online' : 'offline'}"></span>
+                                ${node.node_id}
+                            </td>
+                            <td>${node.node_type}</td>
+                            <td>${node.online ? 'Online' : 'Offline'}</td>
+                            <td>
+                                <div class="progress" style="width: 100px;">
+                                    <div class="progress-bar ${node.cpu_percent > 80 ? 'bg-danger' : node.cpu_percent > 60 ? 'bg-warning' : 'bg-success'}" 
+                                         style="width: ${node.cpu_percent}%">${node.cpu_percent}%</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="progress" style="width: 100px;">
+                                    <div class="progress-bar ${node.memory_percent > 80 ? 'bg-danger' : node.memory_percent > 60 ? 'bg-warning' : 'bg-success'}" 
+                                         style="width: ${node.memory_percent}%">${node.memory_percent}%</div>
+                                </div>
+                            </td>
+                            <td>${node.metrics?.tasks_completed || 0}</td>
+                            <td>${node.current_task ? `<span class="badge bg-primary">${node.current_task.type}</span>` : '-'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewNodeDetails('${node.node_id}')">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </td>
+                        `;
+                    });
+                });
+        }
+        
+        function updateRecentTasks(tasksData) {
+            const container = document.getElementById('recent-tasks-list');
+            container.innerHTML = '';
+            
+            fetch('/api/tasks/recent?limit=10')
+                .then(response => response.json())
+                .then(tasks => {
+                    tasks.forEach(task => {
+                        const taskDiv = document.createElement('div');
+                        taskDiv.className = `task-item ${task.status}`;
+                        
+                        const statusBadge = {
+                            'completed': 'success',
+                            'failed': 'danger',
+                            'running': 'warning',
+                            'pending': 'secondary'
+                        }[task.status] || 'secondary';
+                        
+                        taskDiv.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>${task.type}</strong>
+                                    <span class="badge bg-${statusBadge} ms-2">${task.status}</span>
+                                    <br>
+                                    <small class="text-muted">${task.target || 'N/A'}</small>
+                                </div>
+                                <small class="text-muted">${new Date(task.created_at * 1000).toLocaleTimeString()}</small>
+                            </div>
+                        `;
+                        
+                        container.appendChild(taskDiv);
+                    });
+                });
+        }
+        
+        function setupSocketListeners() {
+            socket.on('connect', () => {
+                console.log('Connected to dashboard');
+            });
+            
+            socket.on('metrics_update', (data) => {
+                if (currentPage === 'dashboard') {
+                    updateMetrics(data);
+                }
+            });
+            
+            socket.on('task_completed', (data) => {
+                showNotification(`Task ${data.task_id} completed`, 'success');
+            });
+            
+            socket.on('node_status_change', (data) => {
+                showNotification(`Node ${data.node_id} is now ${data.status}`, data.status === 'online' ? 'success' : 'warning');
+            });
+        }
+        
+        function updateMetrics(data) {
+            // Update charts with new data
+            if (charts.taskActivity) {
+                const chart = charts.taskActivity;
+                const label = new Date().toLocaleTimeString();
+                
+                // Add new data point
+                chart.data.labels.push(label);
+                chart.data.datasets[0].data.push(data.metrics.tasks_completed || 0);
+                chart.data.datasets[1].data.push(data.metrics.tasks_failed || 0);
+                
+                // Keep only last 20 points
+                if (chart.data.labels.length > 20) {
+                    chart.data.labels.shift();
+                    chart.data.datasets.forEach(dataset => dataset.data.shift());
+                }
+                
+                chart.update();
+            }
+        }
+        
+        function loadNodes() {
+            fetch('/api/nodes/detailed')
+                .then(response => response.json())
+                .then(nodes => {
+                    const container = document.getElementById('nodes-grid');
+                    container.innerHTML = '';
+                    
+                    Object.values(nodes).forEach(node => {
+                        const nodeCard = createNodeCard(node);
+                        container.appendChild(nodeCard);
+                    });
+                });
+        }
+        
+        function createNodeCard(node) {
+            const col = document.createElement('div');
+            col.className = 'col-md-6 col-lg-4 mb-4';
+            
+            const statusClass = node.online ? 'border-success' : 'border-danger';
+            const statusText = node.online ? 'Online' : 'Offline';
+            
+            col.innerHTML = `
+                <div class="card ${statusClass}">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <span class="node-status ${node.online ? 'online' : 'offline'}"></span>
+                            ${node.node_id}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Type:</strong> ${node.node_type}</p>
+                        <p><strong>Platform:</strong> ${node.platform}</p>
+                        <p><strong>Hostname:</strong> ${node.hostname}</p>
+                        <p><strong>Status:</strong> ${statusText}</p>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">Resources</small>
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-info" style="width: ${node.cpu_percent}%">
+                                    CPU: ${node.cpu_percent}%
+                                </div>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" style="width: ${node.memory_percent}%">
+                                    Memory: ${node.memory_percent}%
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">Statistics</small>
+                            <p class="mb-1">Tasks: ${node.metrics?.tasks_completed || 0} completed, ${node.metrics?.tasks_failed || 0} failed</p>
+                            <p class="mb-1">Uptime: ${formatUptime(node.uptime)}</p>
+                        </div>
+                        
+                        ${node.current_task ? `
+                            <div class="alert alert-info mt-3 mb-0">
+                                <small>Current Task: ${node.current_task.type}</small>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-sm btn-primary" onclick="viewNodeDetails('${node.node_id}')">
+                            View Details
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger float-end" onclick="restartNode('${node.node_id}')">
+                            Restart
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return col;
+        }
+        
+        function loadPipelines() {
+            fetch('/api/pipelines')
+                .then(response => response.json())
+                .then(pipelines => {
+                    const container = document.getElementById('pipelines-list');
+                    container.innerHTML = '';
+                    
+                    pipelines.forEach(pipeline => {
+                        const pipelineCard = createPipelineCard(pipeline);
+                        container.appendChild(pipelineCard);
+                    });
+                });
+        }
+        
+        function createPipelineCard(pipeline) {
+            const card = document.createElement('div');
+            card.className = 'pipeline-card';
+            
+            card.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5>${pipeline.name}</h5>
+                        <p class="text-muted mb-2">${pipeline.description}</p>
+                        <div class="mb-2">
+                            ${pipeline.stages.map((stage, i) => `
+                                <span class="stage-indicator" title="${stage.name}">
+                                    ${i + 1}
+                                </span>
+                            `).join('')}
+                        </div>
+                        <small class="text-muted">
+                            Last run: ${pipeline.last_run ? new Date(pipeline.last_run * 1000).toLocaleString() : 'Never'} |
+                            Run count: ${pipeline.run_count || 0}
+                        </small>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-success" onclick="executePipeline('${pipeline.id}')">
+                            <i class="bi bi-play-fill"></i> Run
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editPipeline('${pipeline.id}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deletePipeline('${pipeline.id}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function loadContent() {
+            const filters = {
+                platform: document.getElementById('platform-filter').value,
+                viral: document.getElementById('viral-filter').value,
+                status: document.getElementById('status-filter').value
+            };
+            
+            let url = '/api/content?limit=50';
+            if (filters.platform) url += `&platform=${filters.platform}`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(content => {
+                    const container = document.getElementById('content-grid');
+                    container.innerHTML = '';
+                    
+                    content.forEach(item => {
+                        const contentCard = createContentCard(item);
+                        container.appendChild(contentCard);
+                    });
+                });
+        }
+        
+        function createContentCard(item) {
+            const col = document.createElement('div');
+            col.className = 'col-md-6 col-lg-4';
+            
+            const viralClass = item.viral_score >= 75 ? 'high' : item.viral_score >= 50 ? 'medium' : 'low';
+            
+            col.innerHTML = `
+                <div class="content-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-secondary">${item.platform}</span>
+                            <span class="viral-score ${viralClass}">${item.viral_score || 0}</span>
+                        </div>
+                        <h6 class="card-title">${item.title || 'Untitled'}</h6>
+                        <p class="card-text small">${(item.content_text || '').substring(0, 150)}...</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">${new Date(item.scraped_at).toLocaleDateString()}</small>
+                            <div>
+                                ${item.analyzed ? '<span class="badge bg-info">Analyzed</span>' : ''}
+                                ${item.script_generated ? '<span class="badge bg-success">Script</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light">
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewContent('${item.content_id}')">
+                            View
+                        </button>
+                        ${!item.analyzed ? `
+                            <button class="btn btn-sm btn-outline-info" onclick="analyzeContent('${item.content_id}')">
+                                Analyze
+                            </button>
+                        ` : ''}
+                        ${item.viral_score > 70 && !item.script_generated ? `
+                            <button class="btn btn-sm btn-outline-success" onclick="generateScript('${item.content_id}')">
+                                Generate Script
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            return col;
+        }
+        
+        function loadAnalytics() {
+            const timeframe = document.getElementById('analytics-timeframe').value;
+            
+            fetch(`/api/analytics/timeline?timeframe=${timeframe}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Update performance chart
+                    updatePerformanceChart(data);
+                    
+                    // Update viral distribution
+                    updateViralDistributionChart(data);
+                    
+                    // Update trending topics
+                    updateTrendingTopics(data);
+                });
+        }
+        
+        function loadLogs() {
+            const nodeFilter = document.getElementById('log-node-filter').value;
+            const levelFilter = document.getElementById('log-level-filter').value;
+            
+            let url = '/api/logs/system?lines=500';
+            if (nodeFilter) url += `&node=${nodeFilter}`;
+            if (levelFilter) url += `&level=${levelFilter}`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const viewer = document.getElementById('log-viewer');
+                    viewer.innerHTML = '';
+                    
+                    data.logs.forEach(log => {
+                        const entry = document.createElement('div');
+                        entry.className = `log-entry ${log.level}`;
+                        entry.textContent = `[${log.timestamp}] [${log.node_id}] [${log.level.toUpperCase()}] ${log.message}`;
+                        viewer.appendChild(entry);
+                    });
+                    
+                    // Auto-scroll to bottom
+                    viewer.scrollTop = viewer.scrollHeight;
+                });
+        }
+        
+        // Helper functions
+        function formatUptime(seconds) {
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            
+            if (days > 0) return `${days}d ${hours}h`;
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+        }
+        
+        function showNotification(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show alert-notification`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+        
+        // Action functions
+        function executePipeline(pipelineId) {
+            fetch(`/api/pipelines/${pipelineId}/execute`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    showNotification(`Pipeline execution started: ${data.execution_id}`, 'success');
+                    loadPipelines(); // Refresh
+                });
+        }
+        
+        function analyzeContent(contentId) {
+            const task = {
+                type: 'analyze_content',
+                target: contentId,
+                priority: 2
+            };
+            
+            fetch('/api/tasks/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(task)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showNotification(`Analysis task created: ${data.task_id}`, 'success');
+            });
+        }
+        
+        function generateScript(contentId) {
+            const task = {
+                type: 'generate_script',
+                target: contentId,
+                priority: 1,
+                metadata: {
+                    style: 'engaging',
+                    duration: 60
+                }
+            };
+            
+            fetch('/api/tasks/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(task)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showNotification(`Script generation task created: ${data.task_id}`, 'success');
+            });
+        }
+        
+        function addPipelineStage() {
+            const container = document.getElementById('pipeline-stages');
+            const stageCount = container.children.length;
+            
+            const stageDiv = document.createElement('div');
+            stageDiv.className = 'border rounded p-3 mb-2';
+            stageDiv.innerHTML = `
+                <h6>Stage ${stageCount + 1}</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="text" class="form-control mb-2" placeholder="Stage name" required>
+                    </div>
+                    <div class="col-md-6">
+                        <select class="form-select mb-2">
+                            <option value="scrape">Scrape</option>
+                            <option value="analyze">Analyze</option>
+                            <option value="generate">Generate</option>
+                            <option value="filter">Filter</option>
+                        </select>
+                    </div>
+                </div>
+                <textarea class="form-control" rows="2" placeholder="Stage configuration (JSON)"></textarea>
+            `;
+            
+            container.appendChild(stageDiv);
+        }
+        
+        function createPipeline() {
+            const pipeline = {
+                name: document.getElementById('pipeline-name').value,
+                description: document.getElementById('pipeline-description').value,
+                stages: [],
+                schedule: document.getElementById('pipeline-schedule').value
+            };
+            
+            // Collect stages
+            const stageElements = document.getElementById('pipeline-stages').children;
+            for (let elem of stageElements) {
+                const inputs = elem.querySelectorAll('input, select, textarea');
+                pipeline.stages.push({
+                    name: inputs[0].value,
+                    type: inputs[1].value,
+                    config: JSON.parse(inputs[2].value || '{}')
+                });
+            }
+            
+            fetch('/api/pipelines', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(pipeline)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showNotification(`Pipeline created: ${data.id}`, 'success');
+                $('#createPipelineModal').modal('hide');
+                loadPipelines();
+            });
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScrapeHive Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --dark-bg: #1a1a2e;
+            --card-bg: #16213e;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dark-mode {
+            background-color
