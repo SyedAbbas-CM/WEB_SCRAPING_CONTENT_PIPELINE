@@ -1,0 +1,228 @@
+# config/default.yaml
+# Default ScrapeHive Configuration
+
+# System Settings
+environment: development
+debug: true
+log_level: INFO
+
+# Redis Configuration
+redis:
+  host: localhost
+  port: 6379
+  password: null
+  db: 0
+  decode_responses: true
+
+# Database Configuration
+database:
+  url: sqlite:///data/scrapehive.db
+  echo: false
+  pool_size: 5
+  max_overflow: 10
+
+# Node Configuration
+nodes:
+  heartbeat_interval: 10  # seconds
+  task_timeout: 300      # 5 minutes
+  retry_attempts: 3
+
+# Scraping Configuration
+scraping:
+  rate_limits:
+    reddit:
+      requests_per_minute: 30
+      cooldown_seconds: 2
+    twitter:
+      requests_per_minute: 20
+      cooldown_seconds: 3
+    instagram:
+      requests_per_minute: 10
+      cooldown_seconds: 6
+    tiktok:
+      requests_per_minute: 15
+      cooldown_seconds: 4
+    default:
+      requests_per_minute: 10
+      cooldown_seconds: 6
+  
+  delays:
+    min_delay: 2
+    max_delay: 5
+    human_variance: 0.3
+  
+  user_agents:
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+# AI Configuration
+ai:
+  device: cuda
+  batch_size: 32
+  max_length: 512
+  temperature: 0.7
+  models_path: models/weights
+  
+  models:
+    viral_predictor:
+      path: models/weights/viral_predictor
+      version: "1.0"
+    content_analyzer:
+      path: models/weights/content_analyzer
+      version: "1.0"
+    script_generator:
+      path: models/weights/script_generator
+      version: "1.0"
+
+# Pipeline Configuration
+pipelines:
+  max_concurrent: 10
+  default_timeout: 3600  # 1 hour
+  storage_retention_days: 30
+
+# Storage Configuration
+storage:
+  scraped_data:
+    path: data/scraped
+    retention_days: 30
+  processed_data:
+    path: data/processed
+    retention_days: 90
+  logs:
+    path: logs
+    retention_days: 7
+    max_size_mb: 100
+
+# Security Configuration
+security:
+  secret_key: change-this-in-production
+  jwt_expiry_hours: 24
+  api_key_required: true
+  allowed_ips: []
+  rate_limit_per_ip: 1000
+  cors_origins: 
+    - http://localhost:3000
+    - http://localhost:5000
+
+# Monitoring Configuration
+monitoring:
+  metrics_interval: 60  # seconds
+  health_check_interval: 30
+  alert_thresholds:
+    cpu_percent: 90
+    memory_percent: 85
+    error_rate: 0.1
+    queue_size: 1000
+
+# Asset Management
+assets:
+  path: assets
+  cache_size_gb: 10
+  cleanup_interval_hours: 24
+  providers:
+    pixabay:
+      enabled: false
+      api_key: null
+    pexels:
+      enabled: false
+      api_key: null
+    freesound:
+      enabled: false
+      api_key: null
+
+---
+# config/development.yaml
+# Development-specific overrides
+
+debug: true
+log_level: DEBUG
+
+database:
+  echo: true  # SQL logging in development
+
+security:
+  api_key_required: false
+  cors_origins:
+    - http://localhost:3000
+    - http://localhost:3001
+    - http://localhost:8080
+
+monitoring:
+  metrics_interval: 10  # More frequent in dev
+
+---
+# config/production.yaml
+# Production-specific overrides
+
+environment: production
+debug: false
+log_level: INFO
+
+redis:
+  host: redis-cluster.prod.internal
+  password: ${REDIS_PASSWORD}
+
+database:
+  url: postgresql://user:pass@db.prod.internal:5432/scrapehive
+  pool_size: 20
+  max_overflow: 30
+
+security:
+  secret_key: ${SECRET_KEY}
+  api_key_required: true
+  cors_origins:
+    - https://scrapehive.com
+    - https://dashboard.scrapehive.com
+
+scraping:
+  rate_limits:
+    reddit:
+      requests_per_minute: 20  # More conservative in prod
+    twitter:
+      requests_per_minute: 15
+    instagram:
+      requests_per_minute: 8
+    tiktok:
+      requests_per_minute: 12
+
+monitoring:
+  metrics_interval: 60
+  alert_thresholds:
+    cpu_percent: 80  # Stricter in production
+    memory_percent: 75
+    error_rate: 0.05
+
+storage:
+  scraped_data:
+    retention_days: 90  # Keep longer in production
+  processed_data:
+    retention_days: 180
+
+---
+# config/testing.yaml
+# Testing-specific overrides
+
+environment: testing
+debug: true
+log_level: WARNING
+
+database:
+  url: sqlite:///:memory:  # In-memory for tests
+
+redis:
+  db: 15  # Use different Redis DB for tests
+
+scraping:
+  rate_limits:
+    reddit:
+      requests_per_minute: 1000  # No limits in tests
+    twitter:
+      requests_per_minute: 1000
+    instagram:
+      requests_per_minute: 1000
+    tiktok:
+      requests_per_minute: 1000
+
+security:
+  api_key_required: false
+  jwt_expiry_hours: 1  # Short expiry for tests
