@@ -287,6 +287,18 @@ class BaseNode(ABC):
                         
                         task.completed_at = time.time()
                         self.report_task_completion(task)
+                        # If task carries pipeline execution metadata, write stage result key for scheduler/manager
+                        try:
+                            md = task.metadata or {}
+                            execution_id = md.get('execution_id')
+                            stage_id = md.get('stage_id')
+                            if execution_id and stage_id and task.result is not None:
+                                self.redis.set(
+                                    f"stage_result:{execution_id}:{stage_id}",
+                                    json.dumps(task.result)
+                                )
+                        except Exception as e:
+                            self.logger.warning(f"Failed to write stage result for {task.id}: {e}")
                         self.current_task = None
                     else:
                         # No tasks, wait

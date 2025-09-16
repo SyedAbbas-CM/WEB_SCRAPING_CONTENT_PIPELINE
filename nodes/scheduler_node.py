@@ -65,10 +65,13 @@ class SchedulerNode(BaseNode):
         pipeline_keys = self.redis.keys('pipeline:*')
         
         for key in pipeline_keys:
-            pipeline_data = self.redis.hgetall(key)
-            if pipeline_data:
-                pipeline = Pipeline.from_dict(pipeline_data)
-                self.pipelines[pipeline.id] = pipeline
+            raw = self.redis.get(key)
+            if raw:
+                try:
+                    pipeline = Pipeline.from_dict(json.loads(raw))
+                    self.pipelines[pipeline.id] = pipeline
+                except Exception as e:
+                    self.logger.warning(f"Failed to load pipeline {key}: {e}")
                 
         self.logger.info(f"Loaded {len(self.pipelines)} pipelines")
     
@@ -210,7 +213,7 @@ class SchedulerNode(BaseNode):
             
             # For sequential execution, wait for completion
             if stage.config.get('wait_for_completion', False):
-                self._wait_for_stage_completion(execution_id, stage.id)
+                self._wait_for_stage_completion(execution_id, stage.id, timeout=stage.timeout if hasattr(stage, 'timeout') else 300)
         
         # Update pipeline
         pipeline.last_run = time.time()
@@ -373,7 +376,10 @@ class SchedulerNode(BaseNode):
                 continue
                 
             # Check capabilities
-            capabilities = json.loads(node_info.get('capabilities', '[]'))
+            try:
+                capabilities = json.loads(node_info.get('capabilities', '[]'))
+            except Exception:
+                capabilities = []
             score = len(set(required_capabilities) & set(capabilities))
             
             if score > best_score:
@@ -416,8 +422,20 @@ class SchedulerNode(BaseNode):
     
     def _save_pipeline(self, pipeline: Pipeline):
         """Save pipeline to Redis"""
-        self.redis.hset(f'pipeline:{pipeline.id}', mapping=pipeline.to_dict())
+        try:
+            self.redis.set(f'pipeline:{pipeline.id}', json.dumps(pipeline.to_dict()))
+        except Exception as e:
+            self.logger.error(f"Failed to save pipeline {pipeline.id}: {e}")
     
     def _save_scheduled_task(self, task: ScheduledTask):
         """Save scheduled task"""
-        self.redis.hset(f'scheduled:{task.id}', mapping=asdict(task))
+        self.redis.set(f'scheduled:{task.id}', json.dumps(asdict(task)))
+
+    def _wait_for_stage_completion(self, execution_id: str, stage_id: str, timeout: int = 300):
+        """Block until a stage result key is written or timeout"""
+        key = f"stage_result:{execution_id}:{stage_id}"
+        start = time.time()
+        while time.time() - start < timeout:
+            if self.redis.get(key):
+                return
+            time.sleep(1)

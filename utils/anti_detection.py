@@ -38,6 +38,17 @@ class AntiDetection:
     def get_headers(self, platform: str, browser_profile: Optional[str] = None) -> Dict:
         """Get platform-specific headers with anti-detection measures"""
         
+        # Compliance: optionally disable stealth headers via env
+        import os
+        if os.getenv('COMPLIANCE_MODE', '').lower() in ['api_only', 'compliant']:
+            # Minimal realistic headers without platform spoofing
+            return {
+                'User-Agent': self._get_chrome_ua(),
+                'Accept': 'application/json,text/html;q=0.8,*/*;q=0.5',
+                'Accept-Language': self._get_random_language(),
+                'Connection': 'keep-alive'
+            }
+        
         # Select browser profile
         if not browser_profile:
             browser_profile = random.choice(['chrome', 'firefox', 'safari', 'edge'])
@@ -123,13 +134,13 @@ class AntiDetection:
             }
             
         elif platform == 'twitter':
-            return {
-                'Authorization': 'Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA',
-                'X-Twitter-Auth-Type': 'OAuth2Session',
-                'X-Twitter-Client-Language': 'en',
-                'X-Twitter-Active-User': 'yes',
-                'X-CSRF-Token': self._generate_csrf_token()
-            }
+            # Do not hardcode tokens; expect env-provided when needed
+            import os
+            bearer = os.getenv('TWITTER_BEARER_TOKEN')
+            headers = {}
+            if bearer:
+                headers['Authorization'] = f'Bearer {bearer}'
+            return headers
             
         elif platform == 'tiktok':
             return {

@@ -16,6 +16,8 @@ from scrapers.reddit_scraper import RedditScraper
 from scrapers.twitter_scraper import TwitterScraper
 from scrapers.instagram_scraper import InstagramScraper
 from scrapers.tiktok_scraper import TikTokScraper
+from scrapers.youtube_scraper import YouTubeScraper
+from scrapers.facebook_scraper import FacebookScraper
 from utils.anti_detection import AntiDetection
 from utils.proxy_manager import ProxyManager
 from utils.rate_limiter import RateLimiter
@@ -73,6 +75,14 @@ class ScrapingNode(BaseNode):
         if 'tiktok' in self.capabilities:
             scrapers['tiktok'] = TikTokScraper(self.node_id)
             self.logger.info("Initialized TikTok scraper")
+        
+        if 'youtube' in self.capabilities:
+            scrapers['youtube'] = YouTubeScraper(self.node_id)
+            self.logger.info("Initialized YouTube scraper")
+        
+        if 'facebook' in self.capabilities:
+            scrapers['facebook'] = FacebookScraper(self.node_id)
+            self.logger.info("Initialized Facebook scraper")
             
         if 'browser' in self.capabilities:
             self._setup_browser_automation()
@@ -162,6 +172,8 @@ class ScrapingNode(BaseNode):
             return 'tiktok'
         elif 'youtube.com' in domain or 'youtu.be' in domain:
             return 'youtube'
+        elif 'facebook.com' in domain or 'fb.watch' in domain:
+            return 'facebook'
         else:
             return 'generic'
     

@@ -426,8 +426,8 @@ class ViewMasterNode(BaseNode):
         # Route to appropriate queue
         node_id = task_data.get('node_id')
         if node_id:
-            # Specific node
-            queue = f"priority_tasks:{node_id}"
+            # Specific node - use priority_ prefix to match BaseNode consumption
+            queue = f"priority_{self._queue_for_node(node_id)}"
         else:
             # Auto-route based on type
             if task.type in ['predict_virality', 'analyze_content', 'generate_script']:
@@ -531,3 +531,12 @@ class ViewMasterNode(BaseNode):
         
         # Run Flask app with SocketIO
         self.socketio.run(self.app, host='0.0.0.0', port=5000, debug=False)
+
+    def _queue_for_node(self, node_id: str) -> str:
+        if node_id.startswith('ai'):
+            return f"ai_tasks:{node_id}"
+        if node_id.startswith('scraper') or node_id.startswith('scraping'):
+            return f"scraping_tasks:{node_id}"
+        if node_id.startswith('scheduler'):
+            return "scheduling_tasks"
+        return f"tasks:{node_id}"

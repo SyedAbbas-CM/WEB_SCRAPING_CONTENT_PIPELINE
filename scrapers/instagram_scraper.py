@@ -183,11 +183,12 @@
                 return match.group(1)
         
         # Check if it's already a shortcode
-        if re.match(r'^[A-Za-z0-9_-]+# scrapers/instagram_scraper.py
-"""
-Instagram Scraper with anti-detection
-Supports GraphQL API, web scraping, and mobile API endpoints
-"""
+        if re.match(r'^[A-Za-z0-9_-]+', url):
+            return url
+        
+        return None
+
+    # --- File corruption below was removed and restored to a single coherent implementation ---
 
 import re
 import json

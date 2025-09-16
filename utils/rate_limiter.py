@@ -335,3 +335,24 @@ class EnhancedRateLimiter:
                 }
             
             return stats
+
+
+class RateLimiter:
+    """
+    Backwards-compatible wrapper used by nodes.
+    Defaults to 'web' endpoint checks for simplicity.
+    """
+    def __init__(self, platform: str = 'generic'):
+        self._inner = EnhancedRateLimiter(platform)
+    
+    def can_scrape(self, platform: Optional[str] = None, endpoint: str = 'web') -> bool:
+        return self._inner.check_limit(endpoint)
+    
+    def get_wait_time(self, platform: Optional[str] = None, endpoint: str = 'web') -> float:
+        return self._inner.get_wait_time(endpoint)
+    
+    def handle_429(self, platform: Optional[str] = None, endpoint: str = 'web', retry_after: Optional[int] = None):
+        return self._inner.handle_429(endpoint, retry_after)
+    
+    def get_current_limits(self):
+        return self._inner.get_stats()

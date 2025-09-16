@@ -1,0 +1,28 @@
+click~=8.1
+redis~=5.0
+colorlog~=6.8
+psutil~=5.9
+python-dotenv~=1.0
+Flask~=3.0
+flask-socketio~=5.3
+flask-cors~=4.0
+requests~=2.32
+beautifulsoup4~=4.12
+fake-useragent~=1.5
+praw~=7.7
+schedule~=1.2
+networkx~=3.3
+numpy~=1.26
+Pillow~=10.4
+moviepy~=1.0
+pyttsx3~=2.90
+gTTS~=2.5
+selenium~=4.23
+undetected-chromedriver~=3.5
+nvidia-ml-py3~=7.352.0
+# torch is optional; install manually if using real models
+# torch==2.3.1
+httpx~=0.27
+# Optional: tls-client (advanced TLS fingerprinting)
+# tls-client==1.0.1
+

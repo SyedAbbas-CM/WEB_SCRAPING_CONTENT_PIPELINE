@@ -1,0 +1,170 @@
+# API Configuration for Compliant Scraping
+# Set COMPLIANCE_MODE environment variable to control behavior:
+# - api_only: Only use official APIs
+# - api_first: Prefer APIs, fallback to compliant scraping
+# - balanced: Mix of API and ethical scraping
+# - aggressive: Full anti-detection (use carefully)
+
+platforms:
+  reddit:
+    api:
+      enabled: true
+      client_id: "${REDDIT_CLIENT_ID}"
+      client_secret: "${REDDIT_CLIENT_SECRET}"
+      user_agent: "ScrapeHive/1.0 by YourUsername"
+      rate_limits:
+        authenticated: 100  # requests per minute
+        unauthenticated: 10  # requests per minute
+        burst_window: 600   # 10 minutes
+      endpoints:
+        subreddit: "/r/{subreddit}/{sort}.json"
+        post: "/r/{subreddit}/comments/{post_id}.json"
+        search: "/search.json?q={query}"
+        user: "/user/{username}/about.json"
+
+    fallback:
+      enabled: true
+      methods: ["json_endpoints", "old_reddit"]
+      delays:
+        min: 2
+        max: 5
+      user_agents:
+        - "Mozilla/5.0 (compatible; ScrapeHive/1.0; +http://scrapehive.com/bot)"
+      respect_robots_txt: true
+
+  twitter:
+    api:
+      enabled: true
+      bearer_token: "${TWITTER_BEARER_TOKEN}"
+      api_key: "${TWITTER_API_KEY}"
+      api_secret: "${TWITTER_API_SECRET}"
+      rate_limits:
+        search_recent: 450    # per 15 minutes
+        search_all: 300       # per 15 minutes (Academic/Enterprise)
+        tweets_lookup: 300    # per 15 minutes
+        users_lookup: 300     # per 15 minutes
+      endpoints:
+        search_recent: "/2/tweets/search/recent"
+        search_all: "/2/tweets/search/all"
+        tweet_lookup: "/2/tweets"
+        user_lookup: "/2/users"
+
+    fallback:
+      enabled: false  # Twitter heavily protects against scraping
+      methods: []
+      note: "Twitter/X has very strong anti-scraping measures"
+
+  youtube:
+    api:
+      enabled: true
+      api_key: "${YOUTUBE_API_KEY}"
+      rate_limits:
+        daily_quota: 10000    # units per day
+        search_cost: 100      # units per search
+        video_details: 1      # units per video
+        channel_details: 1    # units per channel
+      endpoints:
+        search: "/youtube/v3/search"
+        videos: "/youtube/v3/videos"
+        channels: "/youtube/v3/channels"
+        comments: "/youtube/v3/commentThreads"
+
+    fallback:
+      enabled: true
+      methods: ["rss_feeds", "public_pages"]
+      delays:
+        min: 3
+        max: 8
+      respect_robots_txt: true
+
+  instagram:
+    api:
+      enabled: true
+      access_token: "${INSTAGRAM_ACCESS_TOKEN}"
+      app_id: "${INSTAGRAM_APP_ID}"
+      app_secret: "${INSTAGRAM_APP_SECRET}"
+      rate_limits:
+        business_discovery: 200  # per hour per user
+        media_publish: 25        # posts per 24 hours
+        hashtag_search: 30       # per hour
+      endpoints:
+        business_discovery: "/{ig_user_id}/business_discovery"
+        media: "/{ig_user_id}/media"
+        hashtag_search: "/ig_hashtag_search"
+
+    fallback:
+      enabled: true
+      methods: ["public_api", "embedded_data"]
+      delays:
+        min: 5
+        max: 12
+      respect_robots_txt: true
+      note: "Instagram has strong rate limiting and detection"
+
+  facebook:
+    api:
+      enabled: true
+      access_token: "${FACEBOOK_ACCESS_TOKEN}"
+      app_id: "${FACEBOOK_APP_ID}"
+      app_secret: "${FACEBOOK_APP_SECRET}"
+      rate_limits:
+        graph_api: 4800  # calls per day (varies by impressions)
+        search: 200     # per hour
+      endpoints:
+        page_posts: "/{page_id}/posts"
+        page_info: "/{page_id}"
+        search: "/search"
+
+    fallback:
+      enabled: false
+      methods: []
+      note: "Facebook requires official API for any meaningful data access"
+
+  tiktok:
+    api:
+      enabled: true
+      client_key: "${TIKTOK_CLIENT_KEY}"
+      client_secret: "${TIKTOK_CLIENT_SECRET}"
+      rate_limits:
+        research_api: 1000   # per day (Research API)
+        commercial: 10000    # per day (Commercial API)
+      endpoints:
+        video_query: "/research/video/query/"
+        user_info: "/research/user/info/"
+
+    fallback:
+      enabled: true
+      methods: ["public_api", "embedded_data"]
+      delays:
+        min: 4
+        max: 10
+      respect_robots_txt: true
+      note: "TikTok has sophisticated bot detection"
+
+# Global settings
+global:
+  compliance_mode: "${COMPLIANCE_MODE:-api_first}"
+  respect_robots_txt: true
+  max_retries: 3
+  backoff_factor: 2
+  timeout: 30
+
+  # Rate limiting strategy
+  rate_limiting:
+    algorithm: "token_bucket"
+    burst_allowance: 1.5  # Allow 50% burst above limit
+    cooldown_on_limit: 300  # 5 minutes cooldown when limit hit
+
+  # Monitoring and logging
+  monitoring:
+    track_api_usage: true
+    alert_on_limit: true
+    log_failed_requests: true
+
+  # Ethical guidelines
+  ethics:
+    max_requests_per_hour: 1000
+    respect_rate_limits: true
+    identify_as_bot: true
+    follow_robots_txt: true
+    avoid_peak_hours: false  # Set to true to be extra respectful

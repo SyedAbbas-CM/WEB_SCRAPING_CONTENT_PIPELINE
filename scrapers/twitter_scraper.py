@@ -21,6 +21,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 from utils.anti_detection import AntiDetection
+from utils.session_manager import SessionManager
+from utils.anti_detection_v2 import AntiDetectionV2
 
 class TwitterScraper:
     """
@@ -37,6 +39,8 @@ class TwitterScraper:
         
         # Anti-detection
         self.anti_detection = AntiDetection()
+        self.anti_v2 = AntiDetectionV2()
+        self.session_manager = SessionManager()
         
         # Session management
         self.session = requests.Session()
@@ -86,12 +90,17 @@ class TwitterScraper:
     
     def set_proxy(self, proxy: Dict):
         """Set proxy for requests"""
-        if proxy:
-            proxy_url = f"http://{proxy['username']}:{proxy['password']}@{proxy['address']}:{proxy['port']}"
-            self.session.proxies = {
-                'http': proxy_url,
-                'https': proxy_url
-            }
+        if not proxy:
+            return
+        # Support both single 'url' field and component fields
+        proxy_url = proxy.get('url')
+        if not proxy_url and all(k in proxy for k in ['address', 'port']):
+            auth = ''
+            if proxy.get('username') and proxy.get('password'):
+                auth = f"{proxy['username']}:{proxy['password']}@"
+            proxy_url = f"http://{auth}{proxy['address']}:{proxy['port']}"
+        if proxy_url:
+            self.session.proxies = {'http': proxy_url, 'https': proxy_url}
     
     def set_headers(self, headers: Dict):
         """Set custom headers"""
@@ -230,7 +239,7 @@ class TwitterScraper:
             'features': json.dumps(features)
         }
         
-        headers = self.anti_detection.get_headers('twitter')
+        headers = self.anti_v2.build_headers('twitter', minimal=os.getenv('COMPLIANCE_MODE','').lower() in ['api_only','compliant'])
         headers.update({
             'Authorization': f'Bearer {self.bearer_token}',
             'X-Guest-Token': self.guest_token,
@@ -259,7 +268,7 @@ class TwitterScraper:
             'media.fields': 'url,preview_image_url,type,duration_ms'
         }
         
-        headers = self.anti_detection.get_headers('twitter')
+        headers = self.anti_v2.build_headers('twitter', minimal=os.getenv('COMPLIANCE_MODE','').lower() in ['api_only','compliant'])
         headers.update({
             'Authorization': f'Bearer {self.bearer_token}',
             'X-Guest-Token': self.guest_token
@@ -981,8 +990,8 @@ class TwitterScraper:
     
     def __del__(self):
         """Cleanup"""
-        if self.driver:
-            self.driver.quit()awards_web_tipping_enabled": False,
-            "freedom_of_speech_not_reach_fetch_enabled": True,
-            "standardized_nudges_misinfo": True,
-            "tweet_
+        try:
+            if self.driver:
+                self.driver.quit()
+        except Exception:
+            pass

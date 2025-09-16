@@ -10,6 +10,7 @@ import random
 import requests
 from typing import Dict, List, Optional, Union
 from urllib.parse import urlparse, quote
+import os
 import praw
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
@@ -17,6 +18,8 @@ from fake_useragent import UserAgent
 from utils.reddit_auth_manager import RedditAuthManager
 from utils.ip_manager import IPManager, IPType
 from utils.rate_limiter import EnhancedRateLimiter
+from utils.session_manager import SessionManager
+from utils.anti_detection_v2 import AntiDetectionV2
 
 class RedditScraper:
     """
@@ -34,6 +37,8 @@ class RedditScraper:
         self.auth_manager = RedditAuthManager()
         self.ip_manager = IPManager()
         self.rate_limiter = EnhancedRateLimiter('reddit')
+        self.session_manager = SessionManager()
+        self.anti_v2 = AntiDetectionV2()
         
         # User agent generator
         self.ua = UserAgent()
@@ -58,12 +63,22 @@ class RedditScraper:
         Main scraping method - tries multiple approaches
         """
         params = params or {}
+        compliance_mode = os.getenv('COMPLIANCE_MODE', 'api_first').lower()
         
         # Parse URL
         parsed = self._parse_reddit_url(url)
         
+        # Determine method order based on compliance mode
+        methods = list(self.methods)
+        if compliance_mode in ['api_only', 'api_first']:
+            methods = ['api', 'json', 'old_reddit']
+        elif compliance_mode == 'json_first':
+            methods = ['json', 'api', 'old_reddit']
+        elif compliance_mode == 'web_first':
+            methods = ['old_reddit', 'json', 'api']
+        
         # Try each method in order
-        for method in self.methods:
+        for method in methods:
             try:
                 if method == 'api' and self.auth_manager.accounts:
                     return self._scrape_via_api(parsed, params)
@@ -285,27 +300,13 @@ class RedditScraper:
         if params:
             url += '?' + '&'.join([f"{k}={v}" for k, v in params.items()])
         
-        # Make request
-        headers = {
-            'User-Agent': self.ua.random,
-            'Accept': 'application/json',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
-        }
-        
-        proxies = ip_config.to_proxy_dict() if ip_config and ip_config.port else None
+        # Make request with session manager and AntiDetectionV2 headers
+        headers = self.anti_v2.build_headers('reddit', minimal=os.getenv('COMPLIANCE_MODE','').lower() in ['api_only','compliant'])
+        proxy = {'url': ip_config.to_proxy_dict()['http']} if ip_config and ip_config.port else None
+        session = self.session_manager.get_session('reddit.com', proxy=proxy, headers=headers)
         
         try:
-            response = requests.get(
-                url,
-                headers=headers,
-                proxies=proxies,
-                timeout=30,
-                allow_redirects=False
-            )
+            response = session.get(url, timeout=30, allow_redirects=False)
             
             self.stats['json_calls'] += 1
             
@@ -319,6 +320,11 @@ class RedditScraper:
                     self.ip_manager.mark_ip_blocked(ip_config, 'reddit')
                 raise BlockedException("403 from Reddit")
             elif response.status_code != 200:
+                # Pushshift fallback for subreddit and post when .json fails
+                if parsed['type'] in ['subreddit', 'post']:
+                    ps = self._pushshift_fallback(parsed, params)
+                    if ps:
+                        return ps
                 raise Exception(f"HTTP {response.status_code}")
             
             data = response.json()
@@ -334,6 +340,88 @@ class RedditScraper:
         except requests.exceptions.RequestException as e:
             self.logger.error(f"JSON request failed: {e}")
             raise
+
+    def _pushshift_fallback(self, parsed: Dict, params: Dict) -> Optional[Dict]:
+        """Fallback to Pushshift for basic data when Reddit JSON blocks or fails.
+        Note: Pushshift availability changes over time; handle gracefully."""
+        try:
+            base = 'https://api.pushshift.io/reddit'
+            if parsed['type'] == 'subreddit':
+                q = {
+                    'subreddit': parsed['subreddit'],
+                    'size': params.get('limit', 25),
+                    'sort_type': 'created',
+                    'sort': 'desc'
+                }
+                r = requests.get(f'{base}/search/submission', params=q, timeout=20)
+                if r.status_code == 200:
+                    data = r.json().get('data', [])
+                    posts = []
+                    for d in data:
+                        posts.append({
+                            'id': d.get('id'),
+                            'title': d.get('title',''),
+                            'author': d.get('author','[unknown]'),
+                            'created_utc': d.get('created_utc'),
+                            'score': d.get('score',0),
+                            'num_comments': d.get('num_comments',0),
+                            'permalink': f"https://reddit.com{d.get('permalink','')}",
+                            'url': d.get('url'),
+                            'selftext': d.get('selftext',''),
+                            'subreddit': d.get('subreddit')
+                        })
+                    return {
+                        'platform': 'reddit',
+                        'type': 'subreddit',
+                        'subreddit': parsed['subreddit'],
+                        'posts': posts,
+                        'count': len(posts),
+                        'scraped_at': time.time(),
+                        'method': 'pushshift'
+                    }
+            elif parsed['type'] == 'post' and parsed.get('post_id'):
+                # Fetch submission and comments separately
+                r = requests.get(f"{base}/submission/search", params={'ids': parsed['post_id']}, timeout=20)
+                c = requests.get(f"{base}/comment/search", params={'link_id': parsed['post_id'], 'size': 2000}, timeout=20)
+                if r.status_code == 200:
+                    arr = r.json().get('data', [])
+                    if arr:
+                        pd = arr[0]
+                        post = {
+                            'id': pd.get('id'),
+                            'title': pd.get('title',''),
+                            'author': pd.get('author','[unknown]'),
+                            'created_utc': pd.get('created_utc'),
+                            'score': pd.get('score',0),
+                            'num_comments': pd.get('num_comments',0),
+                            'selftext': pd.get('selftext',''),
+                            'url': pd.get('url'),
+                            'subreddit': pd.get('subreddit')
+                        }
+                        comments = []
+                        if c.status_code == 200:
+                            for cm in c.json().get('data', []):
+                                comments.append({
+                                    'id': cm.get('id'),
+                                    'author': cm.get('author','[unknown]'),
+                                    'body': cm.get('body',''),
+                                    'score': cm.get('score',0),
+                                    'created_utc': cm.get('created_utc'),
+                                    'parent_id': cm.get('parent_id'),
+                                    'depth': cm.get('depth',0)
+                                })
+                        return {
+                            'platform': 'reddit',
+                            'type': 'post',
+                            'post': post,
+                            'comments': comments,
+                            'comment_count': len(comments),
+                            'scraped_at': time.time(),
+                            'method': 'pushshift'
+                        }
+        except Exception:
+            return None
+
     
     def _scrape_via_web(self, parsed: Dict, params: Dict) -> Dict:
         """Scrape using old.reddit.com web interface"""

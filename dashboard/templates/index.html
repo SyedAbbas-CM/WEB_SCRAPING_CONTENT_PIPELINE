@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>ScrapeHive Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 20px; }
+      h1 { margin-bottom: 8px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+      .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; }
+      pre { background: #0b1020; color: #e5e7eb; padding: 8px; border-radius: 6px; overflow: auto; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { padding: 6px 8px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
+      .muted { color: #6b7280; }
+    </style>
+  </head>
+  <body>
+    <h1>ScrapeHive Dashboard</h1>
+    <p class="muted">Basic view. Use the API for full control.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Nodes</h3>
+        <table id="nodes-table"><thead><tr><th>ID</th><th>Type</th><th>Online</th><th>CPU</th><th>Mem</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="card">
+        <h3>Queues</h3>
+        <table id="queues-table"><thead><tr><th>Queue</th><th>Length</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+    <script>
+      async function fetchJSON(url){ const r = await fetch(url); return r.json(); }
+      async function refresh(){
+        try {
+          const nodes = await fetchJSON('/api/nodes');
+          const queues = await fetchJSON('/api/queues');
+          const nt = document.querySelector('#nodes-table tbody');
+          nt.innerHTML = '';
+          Object.entries(nodes).forEach(([id, n]) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${id}</td><td>${n.node_type}</td><td>${n.online ? 'yes' : 'no'}</td><td>${n.cpu_percent||0}%</td><td>${n.memory_percent||0}%</td>`;
+            nt.appendChild(tr);
+          });
+          const qt = document.querySelector('#queues-table tbody');
+          qt.innerHTML = '';
+          Object.entries(queues).forEach(([q, s]) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${q}</td><td>${s.length}</td>`;
+            qt.appendChild(tr);
+          });
+        } catch (e) { console.error(e); }
+      }
+      refresh(); setInterval(refresh, 5000);
+    </script>
+  </body>
+  </html>
+
