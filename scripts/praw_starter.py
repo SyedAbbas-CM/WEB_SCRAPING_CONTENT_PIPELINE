@@ -11,6 +11,10 @@ import os
 import time
 import argparse
 import praw
+try:
+    from dotenv import load_dotenv
+except Exception:
+    load_dotenv = None
 
 
 def create_reddit():
@@ -24,6 +28,9 @@ def create_reddit():
 
 
 def main():
+    # Load environment variables from .env if available
+    if load_dotenv:
+        load_dotenv()
     ap = argparse.ArgumentParser()
     ap.add_argument('--subreddit', required=True)
     ap.add_argument('--limit', type=int, default=25)
